@@ -34,6 +34,7 @@ public class Ftp <: Resource {
         }
     }
     private var initMode = false
+    private var initProt = false
 
     public init(connection: FtpConnection, host: String) {
         this.host = host
@@ -182,18 +183,15 @@ public class Ftp <: Resource {
     }
 
     private func checkInitMode() {
-        if (initMode) {
-            return
+        if (!initMode) {
+            opts("UTF8", "ON")
+            mode("S")
+            ftpType("I")
+            initMode = true
         }
-        opts("UTF8", "ON")
-        mode("S")
-        ftpType("I")
-        try {
+        if (_tls && !initProt) {
             prot("P")
-        } catch (e: Exception) {
-            cjFtpLogger.error("Error PROT: ${e}")
         }
-        initMode = true
     }
 
     private func authTls() {
