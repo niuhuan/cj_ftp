@@ -104,30 +104,6 @@ public class FtpStorFile <: FtpStor {
     }
 }
 
-public class FtpRetrOutputStream <: FtpRetr {
-    
-    private var outputStream: OutputStream
-
-    public init(outputStream: OutputStream) {
-        this.outputStream = outputStream
-    }
-
-    public func onRetrStart(): Unit {
-    }
-
-    public func onRetrEnd(): Unit {
-        outputStream.flush()
-    }
-
-    public func onRetrException(e: Exception): Unit {
-        cjFtpLogger.error("Error onRetrException: ${e}")
-    }
-
-    public func onRetrWrite(data: Array<UInt8>): Unit {
-        outputStream.write(data)
-    }
-}
-
 public class FtpRetrStream <: FtpRetr {
         
         private var outputStream: OutputStream

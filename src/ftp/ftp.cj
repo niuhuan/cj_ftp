@@ -188,7 +188,11 @@ public class Ftp <: Resource {
         opts("UTF8", "ON")
         mode("S")
         ftpType("I")
-        prot("P")
+        try {
+            prot("P")
+        } catch (e: Exception) {
+            cjFtpLogger.error("Error PROT: ${e}")
+        }
         initMode = true
     }
 

@@ -25,6 +25,8 @@ cj_ftp = { git = "https://gitcode.com/niuhuan_cn/cj_ftp.git" }
 
 ## 🔖 用例
 
+更多使用方法请参考[API文档](/docs/api_doc.md)
+
 ```cangjie
 import cj_ftp.*
 
