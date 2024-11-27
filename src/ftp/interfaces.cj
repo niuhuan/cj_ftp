@@ -2,7 +2,6 @@ package cj_ftp.ftp
 
 import cj_ftp.log.*
 
-import std.os.*
 import std.io.*
 import std.fs.*
 
