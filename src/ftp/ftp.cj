@@ -370,6 +370,10 @@ public class Ftp <: Resource {
         }
     }
 
+    public func retr(path: String, stream: OutputStream) {
+        retr(path, FtpRetrStream(stream))
+    }
+
     public func stor(path: String, stor: FtpStor) {
         checkInitMode()
         let port = pasvPort()
@@ -400,6 +404,10 @@ public class Ftp <: Resource {
             // 226 0.000 seconds (measured here), 0.00 Mbytes per second
             readCommand()
         }
+    }
+
+    public func stor(path: String, stream: InputStream) {
+        stor(path, FtpStorStream(stream))
     }
 
     public func mkd(path: String) {
