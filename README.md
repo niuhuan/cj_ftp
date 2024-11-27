@@ -53,7 +53,7 @@ main(): Int64 {
     - [x] `OPTS`/`MODE`/`TYPE` 协议设置
     - [x] `USER`/`PASS` 登录
     - [x] `PWD`/`XPWD`/`CWD` (切换)工作目录
-    - [x] `PASV` 被动模式
+    - [x] `PASV`/`EPSV` 被动模式
     - [x] `MLSD` 列表
     - [x] `RERT`/`STOR`/`DELE` 上传下载删除文件
     - [x] `RNFR`/`RNTO` 移动文件
