@@ -5,6 +5,24 @@ import cj_ftp.log.*
 import std.io.*
 import std.fs.*
 
+@When[cjc_version < "0.57.3"]
+public type ByteBuffer = ByteArrayStream
+
+@When[cjc_version < "0.57.3"]
+public type OpenMode = OpenOption
+
+@When[cjc_version < "0.57.3"]
+public let modeRead = OpenOption.Open(true, false)
+
+@When[cjc_version < "0.57.3"]
+public let modeWrite = OpenOption.CreateOrTruncate(false)
+
+@When[cjc_version >= "0.57.3"]
+public let modeRead = OpenMode.Read
+
+@When[cjc_version >= "0.57.3"]
+public let modeWrite = OpenMode.Write
+
 public interface FtpRetr {
     
     func onRetrStart(): Unit
@@ -33,12 +51,12 @@ public class FtpRetrFile <: FtpRetr {
     
     private var file: File
 
-    public init(path: String, openOption: OpenOption) {
-        this.file = File(path, openOption)
+    public init(path: String, openMode: OpenMode) {
+        this.file = File(path, openMode)
     }
 
     public init(path: String) {
-        this(path, OpenOption.CreateOrTruncate(false))
+        this(path, modeWrite)
     }
 
     public func onRetrStart(): Unit {
@@ -63,12 +81,12 @@ public class FtpStorFile <: FtpStor {
     
     private var file: File
 
-    public init(path: String, openOption: OpenOption) {
-        this.file = File(path, openOption)
+    public init(path: String, openMode: OpenMode) {
+        this.file = File(path, openMode)
     }
 
     public init(path: String) {
-        this(path, OpenOption.Open(true, false))
+        this(path, modeRead)
     }
 
     public func onStorStart(): Unit {
@@ -91,10 +109,10 @@ public class FtpStorFile <: FtpStor {
 
 public class FtpRetrMemory <: FtpRetr {
     
-    private var buffer: ByteArrayStream
+    private var buffer: ByteBuffer
 
     public init() {
-        this.buffer = ByteArrayStream()
+        this.buffer = ByteBuffer()
     }
 
     public func onRetrStart(): Unit {
@@ -118,10 +136,10 @@ public class FtpRetrMemory <: FtpRetr {
 
 public class FtpStorMemory <: FtpStor {
     
-    private var buffer: ByteArrayStream
+    private var buffer: ByteBuffer
 
     public init(data: Array<UInt8>) {
-        this.buffer = ByteArrayStream()
+        this.buffer = ByteBuffer()
         buffer.write(data)
     }
 

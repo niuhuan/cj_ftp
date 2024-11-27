@@ -7,6 +7,7 @@ import cj_ftp.connection.*
 import std.socket.*
 import std.convert.*
 import std.io.*
+import std.net.*
 import std.regex.*
 import std.collection.*
 
@@ -63,7 +64,7 @@ public class Ftp <: Resource {
         let serverResponse = FtpResponse()
         while (true) {
             var line = reader.readln().getOrThrow({=>FtpConnectionException("Connect has been eof")})
-            cjFtpLogger.trace("S: ${line}")
+            cjFtpLogger.trace("S: ${line}", ("name", "Ftp"))
             match (responseBaseRegex.matches(line)) {
                 case Some(r) =>
                     let code = Int64.parse(r.matchStr(1))
@@ -109,7 +110,7 @@ public class Ftp <: Resource {
 
     private func writeCommand(command: String) {
         let writer = this.connection.writer
-        cjFtpLogger.trace("C: ${command}")
+        cjFtpLogger.trace("C: ${command}", ("name", "Ftp"))
         writer.write(command)
         writer.write("\r\n")
         writer.flush()
@@ -293,7 +294,7 @@ public class Ftp <: Resource {
             readCommand()
             let reader = StringReader(socket)
             while(let Some(line) <- reader.readln()) {
-                cjFtpLogger.trace("S: PASV: ${line}")
+                cjFtpLogger.trace("S: PASV: ${line}", ("name", "Ftp"))
                 items.append(parseMlsdLine(line))
             }
         }
