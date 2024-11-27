@@ -1,5 +1,7 @@
 package cj_ftp.ftp
 
+import cj_ftp.log.*
+
 import std.os.*
 import std.io.*
 import std.fs.*
@@ -10,7 +12,7 @@ public interface FtpRetr {
 
     func onRetrEnd(): Unit
 
-    func onRetrError(e: Exception): Unit
+    func onRetrException(e: Exception): Unit
 
     func onRetrWrite(data: Array<UInt8>): Unit
 
@@ -22,7 +24,7 @@ public interface FtpStor {
 
     func onStorEnd(): Unit
 
-    func onStorError(e: Exception): Unit
+    func onStorException(e: Exception): Unit
 
     func onStorRead(data: Array<UInt8>): Int64
 
@@ -48,7 +50,8 @@ public class FtpRetrFile <: FtpRetr {
         file.close()
     }
 
-    public func onRetrError(e: Exception): Unit {
+    public func onRetrException(e: Exception): Unit {
+        cjFtpLogger.error("Error onRetrException: ${e}")
         file.close()
     }
 
@@ -76,7 +79,9 @@ public class FtpStorFile <: FtpStor {
         file.close()
     }
 
-    public func onStorError(e: Exception): Unit {
+    public func onStorException(e: Exception): Unit {
+        cjFtpLogger.error("Error onStorException: ${e}")
+
         file.close()
     }
 

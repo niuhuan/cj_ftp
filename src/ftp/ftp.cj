@@ -15,16 +15,17 @@ private let defaultFtpPort: UInt16 = 21
 
 public class Ftp <: Resource {
 
-    public var connection: FtpConnection
+    private let host: String;
+    private let connection: FtpConnection
     private var _feature: ArrayList<String> = ArrayList<String>()
     public prop feature: ArrayList<String> {
         get() {
             feat()
         }
     }
-    public var overridePassiveHost: Option<String> = None
 
-    public init(connection: FtpConnection) {
+    public init(connection: FtpConnection, host: String) {
+        this.host = host
         this.connection = connection
         initFtp()
         feat()
@@ -33,12 +34,12 @@ public class Ftp <: Resource {
         ftpType("I")
     }
 
-    public init(socket: StreamingSocket) {
-        this(ftpConnection(socket))
+    public init(socket: StreamingSocket, host: String) {
+        this(ftpConnection(socket), host)
     }
 
     public init(host: String, port: UInt16) {
-        this(defaultConnect(host, port))
+        this(defaultConnect(host, port), host)
     }
 
     public init(host: String) {
@@ -195,7 +196,7 @@ public class Ftp <: Resource {
         readCommand()
     }
 
-    public func pasv(): (String, UInt16) {
+    private func pasv(): (String, UInt16) {
         writeCommand("PASV")
         let rsp = readCommand()
         let regex = Regex("(\\d+),(\\d+),(\\d+),(\\d+),(\\d+),(\\d+)")
@@ -209,23 +210,42 @@ public class Ftp <: Resource {
         }
     }
 
-    private func pasvConnect(host: String, port: UInt16): StreamingSocket {
-        if (let Some(overrideHost) <- overridePassiveHost) {
-           defaultConnect(overrideHost, port)
-        } else {
-              defaultConnect(host, port)
+    private func epsv(): UInt16 {
+        writeCommand("EPSV")
+        let rsp = readCommand()
+        let regex = Regex("\\|\\|\\|(\\d+)\\|")
+        match (regex.matcher(rsp.message).find()) {
+            case Some(r) =>
+                UInt16.parse(r.matchStr(1))
+            case None =>
+                throw FtpParseException("Invalid EPSV response", rsp.message)
         }
     }
 
+    private func pasvPort(): UInt16 {
+        if (this._feature.contains("EPSV")) {
+            return epsv()
+        }
+        if (this._feature.contains("PASV")) {
+            let (_, port) = pasv()
+            return port
+        }
+        throw FtpException("No PASV or EPSV feature")
+    }
+
+    private func pasvConnect(port: UInt16): StreamingSocket {
+        defaultConnect(host, port)
+    }
+
     public func mlsd(path: Option<String>): ArrayList<FtpFileItem> {
-        let (host, port) = pasv()
+        let port = pasvPort()
         var cmd = "MLSD"
         if (path.isSome()) {
             cmd += " ${path.getOrThrow()}"
         }
         writeCommand(cmd)
         let items = ArrayList<FtpFileItem>()
-        try (socket = pasvConnect(host, port)) {
+        try (socket = pasvConnect(port)) {
             // 150 Accepted data connection
             readCommand()
             let reader = StringReader(socket)
@@ -280,9 +300,9 @@ public class Ftp <: Resource {
     }
 
     public func retr(path: String, retr: FtpRetr) {
-        let (host, port) = pasv()
+        let port = pasvPort()
         writeCommand("RETR ${path}")
-        try (socket = pasvConnect(host, port)) {
+        try (socket = pasvConnect(port)) {
             // 150 Accepted data connection
             readCommand()
             let buffer = Array<UInt8>(4096, {_=>0})
@@ -296,7 +316,7 @@ public class Ftp <: Resource {
             }
             retr.onRetrEnd()
         } catch(e: Exception) {
-            retr.onRetrError(e)
+            retr.onRetrException(e)
         } finally {
             // 226-File successfully transferred
             // 226 0.000 seconds (measured here), 0.00 Mbytes per second
@@ -305,9 +325,9 @@ public class Ftp <: Resource {
     }
 
     public func stor(path: String, stor: FtpStor) {
-        let (host, port) = pasv()
+        let port = pasvPort()
         writeCommand("STOR ${path}")
-        try (socket = pasvConnect(host, port)) {
+        try (socket = pasvConnect(port)) {
             // 150 Accepted data connection
             readCommand()
             let buffer = Array<UInt8>(4096, {_=>0})
@@ -327,7 +347,7 @@ public class Ftp <: Resource {
             println("all: ${all}, jll: ${jll}")
             stor.onStorEnd()
         } catch(e: Exception) {
-            stor.onStorError(e)
+            stor.onStorException(e)
         } finally {
             // 226-File successfully transferred
             // 226 0.000 seconds (measured here), 0.00 Mbytes per second
