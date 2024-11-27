@@ -19,6 +19,16 @@ public class FtpConnection <: Resource{
         this.writer = StreamWriter(socket)
     }
 
+    public func startTls() {
+        var config = TlsClientConfig()
+        config.verifyMode = TrustAll
+        let socket = TlsSocket.client(this.socket, clientConfig: config)
+        socket.handshake()
+        this.socket = socket
+        this.reader = FtpStreamReader(this.socket)
+        this.writer = StreamWriter(this.socket)
+    }
+
     public func flush() {
         socket.flush()
     }
@@ -35,6 +45,12 @@ public class FtpConnection <: Resource{
         socket.close()
     }
 
+    public func tlsSession(): TlsSession {
+        (socket as TlsSocket)
+            .getOrThrow({=>FtpConnectionException("not tls socket")})
+            .session
+            .getOrThrow({=>FtpConnectionException("not tls session")})
+    }
 }
 
 
@@ -204,6 +220,18 @@ public func defaultConnect(host: String, port: UInt16): StreamingSocket {
     socket.readTimeout = Duration.second * 30
     socket.connect()
     socket
+}
+
+public func tlsConnect(socket: StreamingSocket, session: Option<TlsSession>): StreamingSocket {
+    var config = TlsClientConfig()
+    config.verifyMode = TrustAll
+    let tlsSocket = TlsSocket.client(socket, clientConfig: config, session: session)
+    tlsSocket.handshake()
+    tlsSocket
+}
+
+public func tlsConnect(socket: StreamingSocket): StreamingSocket {
+    tlsConnect(socket, None)
 }
 
 public func ftpConnection(socket: StreamingSocket) {

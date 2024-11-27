@@ -15,7 +15,7 @@ private let defaultFtpPort: UInt16 = 21
 
 public class Ftp <: Resource {
 
-    private let host: String;
+    private let host: String
     private let connection: FtpConnection
     private var _feature: ArrayList<String> = ArrayList<String>()
     public prop feature: ArrayList<String> {
@@ -23,15 +23,19 @@ public class Ftp <: Resource {
             feat()
         }
     }
+    private var _tls = false;
+    public prop tls: Bool {
+        get() {
+            this._tls
+        }
+    }
+    private var initMode = false
 
     public init(connection: FtpConnection, host: String) {
         this.host = host
         this.connection = connection
-        initFtp()
+        serverHello()
         feat()
-        opts("UTF8", "ON")
-        mode("S")
-        ftpType("I")
     }
 
     public init(socket: StreamingSocket, host: String) {
@@ -111,7 +115,7 @@ public class Ftp <: Resource {
         writer.flush()
     }
 
-    private func initFtp() {
+    private func serverHello() {
         readCommand()
     }
 
@@ -149,6 +153,38 @@ public class Ftp <: Resource {
         readCommand()
     }
 
+    public func prot(prot: String) {
+        writeCommand("PROT ${prot}")
+        readCommand()
+    }
+
+    private func checkInitMode() {
+        if (initMode) {
+            return
+        }
+        opts("UTF8", "ON")
+        mode("S")
+        ftpType("I")
+        prot("P")
+        initMode = true
+    }
+
+    public func authTls() {
+        auth("TLS")
+        this._tls = true
+        connection.startTls()
+    }
+
+    public func tryAuthTls(): Bool{
+        try {
+            authTls()
+            true
+        } catch(e: FtpCommandException) {
+            cjFtpLogger.error("Error tryAuthTls: ${e}")
+            false
+        }
+    }
+
     public func user(user: String): FtpResponse {
         writeCommand("USER ${user}")
         readCommand()
@@ -165,6 +201,7 @@ public class Ftp <: Resource {
             throw FtpCommandException(rsp)
         }
         this.pass(password)
+        checkInitMode()
     }
 
     public func pwd(): String {
@@ -234,10 +271,16 @@ public class Ftp <: Resource {
     }
 
     private func pasvConnect(port: UInt16): StreamingSocket {
-        defaultConnect(host, port)
+        let socket = defaultConnect(host, port)
+        if (_tls) {
+            tlsConnect(socket, connection.tlsSession())
+        } else {  
+            socket
+        }
     }
 
     public func mlsd(path: Option<String>): ArrayList<FtpFileItem> {
+        checkInitMode()
         let port = pasvPort()
         var cmd = "MLSD"
         if (path.isSome()) {
@@ -279,13 +322,15 @@ public class Ftp <: Resource {
                 case "size" =>
                     item.size = Int64.parse(value)
                 case "modify" =>
-                    item.modify = Int64.parse(value)
+                    item.modify = Float64.parse(value)
                 case "unix.uid" =>
                     item.unixUid = Int64.parse(value)
                 case "unix.gid" =>
                     item.unixGid = Int64.parse(value)
                 case "unique" =>
                     item.unique = value
+                case "perms" =>
+                    item.perms = value
                 case "name" =>
                     item.name = value
                 case _ =>
@@ -300,6 +345,7 @@ public class Ftp <: Resource {
     }
 
     public func retr(path: String, retr: FtpRetr) {
+        checkInitMode()
         let port = pasvPort()
         writeCommand("RETR ${path}")
         try (socket = pasvConnect(port)) {
@@ -325,6 +371,7 @@ public class Ftp <: Resource {
     }
 
     public func stor(path: String, stor: FtpStor) {
+        checkInitMode()
         let port = pasvPort()
         writeCommand("STOR ${path}")
         try (socket = pasvConnect(port)) {

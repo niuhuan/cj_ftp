@@ -30,6 +30,7 @@ import cj_ftp.*
 
 main(): Int64 {
     try (ftp = Ftp(host, port)) {
+        ftp.tryAuthTls()
         ftp.login(username, password)
         let pwd = ftp.pwd()
         ftp.cwd("dir")
@@ -52,6 +53,8 @@ main(): Int64 {
     - [x] `FEAT` 功能列表
     - [x] `OPTS`/`MODE`/`TYPE` 协议设置
     - [x] `USER`/`PASS` 登录
+    - [x] `AUTH` TLS
+    - [x] `PROT` 保护级别
     - [x] `PWD`/`XPWD`/`CWD` (切换)工作目录
     - [x] `PASV`/`EPSV` 被动模式
     - [x] `MLSD` 列表
