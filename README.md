@@ -58,10 +58,21 @@ main(): Int64 {
     - [x] `PWD`/`XPWD`/`CWD` (切换)工作目录
     - [x] `PASV`/`EPSV` 被动模式
     - [x] `MLSD` 列表
-    - [x] `RERT`/`STOR`/`DELE` 上传下载删除文件
+    - [x] `RERT`/`STOR`/`DELE`/`APPE`/`STOU` 上传下载删除续传文件
     - [x] `RNFR`/`RNTO` 移动文件
     - [x] `NOOP`/`SYST`/`QUIT`
 
+| 参考外部链接 | 说明
+| -- | :-- |
+| [RFC697](https://tools.ietf.org/html/rfc697) |  CWD Command of FTP |
+| [RFC959](https://tools.ietf.org/html/rfc959) |  File Transfer Protocol (FTP) |
+| [RFC1639](https://tools.ietf.org/html/rfc1639) |  FTP Operation Over Big Address Records (FOOBAR) |
+| [RFC2228](https://tools.ietf.org/html/rfc2228) |  FTP Security Extensions |
+| [RFC2389](https://tools.ietf.org/html/rfc2389) |  Feature negotiation mechanism for the File Transfer Protocol |
+| [RFC2428](https://tools.ietf.org/html/rfc2428) |  FTP Extensions for IPv6 and NATs |
+| [RFC2640](https://tools.ietf.org/html/rfc2640) |  Internationalization of the File Transfer Protocol |
+| [RFC3659](https://tools.ietf.org/html/rfc3659) |  Extensions to FTP |
+| [RFC5797](https://tools.ietf.org/html/rfc5797) |  FTP Command and Extension Registry |
 
 ## 🏗️ 构建
 

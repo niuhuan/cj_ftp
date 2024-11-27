@@ -374,10 +374,10 @@ public class Ftp <: Resource {
         retr(path, FtpRetrStream(stream))
     }
 
-    public func stor(path: String, stor: FtpStor) {
+    private func storeCommand(command: String, stor: FtpStor) {
         checkInitMode()
         let port = pasvPort()
-        writeCommand("STOR ${path}")
+        writeCommand(command)
         try (socket = pasvConnect(port)) {
             // 150 Accepted data connection
             readCommand()
@@ -406,8 +406,28 @@ public class Ftp <: Resource {
         }
     }
 
+    public func stor(path: String, stor: FtpStor) {
+        storeCommand("STOR ${path}", stor)
+    }
+
     public func stor(path: String, stream: InputStream) {
         stor(path, FtpStorStream(stream))
+    }
+
+    public func appe(path: String, stor: FtpStor) {
+        storeCommand("APPE ${path}", stor)
+    }
+
+    public func appe(path: String, stream: InputStream) {
+        appe(path, FtpStorStream(stream))
+    }
+
+    public func stou(path: String, stor: FtpStor) {
+        storeCommand("STOU ${path}", stor)
+    }
+
+    public func stou(path: String, stream: InputStream) {
+        stou(path, FtpStorStream(stream))
     }
 
     public func mkd(path: String) {
