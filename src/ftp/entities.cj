@@ -2,6 +2,9 @@ package cj_ftp.ftp
 
 import cj_ftp.exception.*
 
+/**
+* File item in an FTP directory
+*/
 public class FtpFileItem <: ToString {
 
     public var itemType: String
@@ -30,6 +33,9 @@ public class FtpFileItem <: ToString {
 
 }
 
+/**
+* Response from an FTP server
+*/
 public class FtpResponse <: ToString {
    public var code: Int64
    public var message: String
@@ -49,6 +55,9 @@ public class FtpResponse <: ToString {
    }
 }
 
+/**
+* Code >= 400 response from an FTP server
+*/
 public class FtpCommandException <: FtpException & ToString {
     public let response: FtpResponse
 
@@ -60,5 +69,4 @@ public class FtpCommandException <: FtpException & ToString {
     public func toString(): String {
         "FtpCommandException(${response.code}, ${response.message})"
     }
-
 }

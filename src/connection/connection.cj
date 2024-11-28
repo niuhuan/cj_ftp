@@ -8,16 +8,19 @@ import std.net.*
 import net.tls.*
 import cj_ftp.exception.*
 
-public class FtpConnection <: Resource{
+/**
+* Schedule Ftp connections
+*/
+public class FtpConnection <: Resource {
 
     private var socket: StreamingSocket
     public var reader: FtpStreamReader 
-    public var writer: StreamWriter
+    public var writer: FtpStreamWriter
 
     public init(socket: StreamingSocket) {
         this.socket = socket
         this.reader = FtpStreamReader(socket)
-        this.writer = StreamWriter(socket)
+        this.writer = FtpStreamWriter(socket)
     }
 
     public func startTls() {
@@ -27,7 +30,7 @@ public class FtpConnection <: Resource{
         socket.handshake()
         this.socket = socket
         this.reader = FtpStreamReader(this.socket)
-        this.writer = StreamWriter(this.socket)
+        this.writer = FtpStreamWriter(this.socket)
     }
 
     public func flush() {
@@ -54,23 +57,23 @@ public class FtpConnection <: Resource{
     }
 }
 
-
+/**
+* Read input stream, add buffer, read by character, read by line
+*/
 public class FtpStreamReader {
     
-    var readBuff = Array<Byte>(8192, {_=>0})
-    var writeToBuffPosition = 0
-    var readToBuffPosition = 0
-
-    var inputStream: InputStream
+    private var readBuff = Array<Byte>(8192, {_=>0})
+    private var writeToBuffPosition = 0
+    private var readToBuffPosition = 0
+    private var inputStream: InputStream
 
     public init(socket: InputStream) {
         this.inputStream = socket
     }
 
-    // public func deflate() {
-    //     inputStream = DecompressInputStream(inputStream, wrap: DeflateFormat, bufLen: 1)
-    // }
-
+    /**
+    * Read line from input stream, return None if eofß
+    */
     public func readln(): ?String {
         let builder = ArrayList<Byte>()
         while (true) {
@@ -109,6 +112,9 @@ public class FtpStreamReader {
         throw Exception("unreachable")
     }
 
+    /**
+    * Read byte from input stream, return None if eof
+    */
     public func readByte(): ?Byte {
         while (true) {
             if (readToBuffPosition < writeToBuffPosition) {
@@ -127,7 +133,9 @@ public class FtpStreamReader {
         throw Exception("unreachable")
     }
 
-
+    /**
+    * Read size of bytes from input stream
+    */
     public func readSize(size: Int): Array<Byte> {
         if (size == 0) {
             return Array<Byte>(0, {_=>0})
@@ -139,6 +147,9 @@ public class FtpStreamReader {
         array
     }
 
+    /**
+    * Read until predicate is true
+    */
     public func readUntil(predicate: (Rune)->Bool) : ?String {
         let str = StringBuilder();
         while(true) {
@@ -158,6 +169,9 @@ public class FtpStreamReader {
         str.toString()
     }
 
+    /**
+    * Read until rune is found or end of stream, return None if eof
+    */
     public func readRune(): ?Rune {
         let builder = ArrayList<Byte>()
         let readByte = match (this.readByte()) {
@@ -189,20 +203,16 @@ public class FtpStreamReader {
 
 }
 
-public class StreamWriter <: OutputStream{
+/**
+* Write to output stream
+*/
+public class FtpStreamWriter <: OutputStream {
 
-    var writeBuff = Array<Byte>(8192, {_=>0})
-    var writeBuffPosition = 0
-
-    var outputStream: OutputStream
+    private var outputStream: OutputStream
 
     public init(socket: OutputStream) {
         this.outputStream = socket
     }
-
-    // public func deflate() {
-    //     outputStream = CompressOutputStream(outputStream, wrap: DeflateFormat, bufLen: 1)
-    // }
     
     public func write(buffer: Array<UInt8>) : Unit {
         outputStream.write(buffer)
@@ -218,6 +228,9 @@ public class StreamWriter <: OutputStream{
 
 }
 
+/**
+* Connect to host and port
+*/
 public func defaultConnect(host: String, port: UInt16): StreamingSocket {
     let socket = TcpSocket(host, port)
     socket.writeTimeout = Duration.second * 30
@@ -226,6 +239,9 @@ public func defaultConnect(host: String, port: UInt16): StreamingSocket {
     socket
 }
 
+/**
+* Create tls connection with socket and handshake
+*/
 public func tlsConnect(socket: StreamingSocket, session: Option<TlsSession>): StreamingSocket {
     var config = TlsClientConfig()
     config.verifyMode = TrustAll
@@ -234,10 +250,16 @@ public func tlsConnect(socket: StreamingSocket, session: Option<TlsSession>): St
     tlsSocket
 }
 
+/**
+* Create tls connection with socket and handshake
+*/
 public func tlsConnect(socket: StreamingSocket): StreamingSocket {
     tlsConnect(socket, None)
 }
 
+/**
+* Create FtpConnection with socket
+*/
 public func ftpConnection(socket: StreamingSocket) {
     FtpConnection(socket)
 }

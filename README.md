@@ -30,7 +30,7 @@ import cj_ftp.*
 
 main(): Int64 {
     try (ftp = Ftp(host, port)) {
-        ftp.tryAuthTls()
+        ftp.tryIntoSecure()
         ftp.login(username, password)
         let pwd = ftp.pwd()
         ftp.cwd("dir")

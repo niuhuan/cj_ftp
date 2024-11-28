@@ -6,9 +6,6 @@ import std.io.*
 import std.fs.*
 
 @When[cjc_version < "0.57.3"]
-public type ByteBuffer = ByteArrayStream
-
-@When[cjc_version < "0.57.3"]
 public type OpenMode = OpenOption
 
 @When[cjc_version < "0.57.3"]
@@ -107,58 +104,6 @@ public class FtpStorFile <: FtpStor {
     }
 }
 
-public class FtpRetrMemory <: FtpRetr {
-    
-    private var buffer: ByteBuffer
-
-    public init() {
-        this.buffer = ByteBuffer()
-    }
-
-    public func onRetrStart(): Unit {
-    }
-
-    public func onRetrEnd(): Unit {
-    }
-
-    public func onRetrException(e: Exception): Unit {
-        cjFtpLogger.error("Error onRetrException: ${e}")
-    }
-
-    public func onRetrWrite(data: Array<UInt8>): Unit {
-        buffer.write(data)
-    }
-
-    public func getBuffer(): Array<UInt8> {
-        buffer.bytes()
-    }
-}
-
-public class FtpStorMemory <: FtpStor {
-    
-    private var buffer: ByteBuffer
-
-    public init(data: Array<UInt8>) {
-        this.buffer = ByteBuffer()
-        buffer.write(data)
-    }
-
-    public func onStorStart(): Unit {
-    }
-
-    public func onStorEnd(): Unit {
-    }
-
-    public func onStorException(e: Exception): Unit {
-        cjFtpLogger.error("Error onStorException: ${e}")
-    }
-
-    public func onStorRead(data: Array<UInt8>): Int64 {
-        buffer.read(data)
-    }
-
-}
-
 public class FtpRetrOutputStream <: FtpRetr {
     
     private var outputStream: OutputStream
@@ -228,50 +173,4 @@ public class FtpStorStream <: FtpStor {
     public func onStorRead(data: Array<UInt8>): Int64 {
         inputStream.read(data)
     }
-}
-
-extend File <: FtpRetr {
-
-    public func onRetrStart(): Unit {
-        if (this.isClosed()) {
-            throw Exception("File is closed")
-        }
-    }
-
-    public func onRetrEnd(): Unit {
-        this.close()
-    }
-
-    public func onRetrException(e: Exception): Unit {
-        cjFtpLogger.error("Error onRetrException: ${e}")
-        this.close()
-    }
-
-    public func onRetrWrite(data: Array<UInt8>): Unit {
-        this.write(data)
-    }
-
-}
-
-extend File <: FtpStor {
-
-    public func onStorStart(): Unit {
-        if (this.isClosed()) {
-            throw Exception("File is closed")
-        }
-    }
-
-    public func onStorEnd(): Unit {
-        this.close()
-    }
-
-    public func onStorException(e: Exception): Unit {
-        cjFtpLogger.error("Error onStorException: ${e}")
-        this.close()
-    }
-
-    public func onStorRead(data: Array<UInt8>): Int64 {
-        this.read(data)
-    }
-
 }
