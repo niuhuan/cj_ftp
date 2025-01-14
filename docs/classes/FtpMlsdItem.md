@@ -1,4 +1,4 @@
-class FtpFileItem FTP服务器中的文件信息
+class FtpMlsdItem FTP服务器中的文件信息
 ====================================
 
 | 变量 | 类型 | 说明 |

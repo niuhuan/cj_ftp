@@ -59,7 +59,7 @@ main(): Int64 {
     - [x] `PROT` 保护级别
     - [x] `PWD`/`XPWD`/`CWD` (切换)工作目录
     - [x] `PASV`/`EPSV` 被动模式
-    - [x] `MLSD` 列表
+    - [x] `MLSD`/`LIST` 列表
     - [x] `RERT`/`STOR`/`DELE`/`APPE`/`STOU` 上传下载删除续传文件
     - [x] `RNFR`/`RNTO` 移动文件
     - [x] `NOOP`/`SYST`/`QUIT`

@@ -5,7 +5,7 @@ import cj_ftp.exception.*
 /**
 * File item in an FTP directory
 */
-public class FtpFileItem <: ToString {
+public class FtpMlsdItem <: ToString {
 
     public var itemType: String
     public var size: Int64
@@ -28,9 +28,37 @@ public class FtpFileItem <: ToString {
     }
 
     public func toString(): String {
-        "FtpFileItem(type=${itemType}, size=${size}, modify=${modify}, unixUid=${unixUid}, unixGid=${unixGid}, unique=${unique}, perms=${perms}, name=${name})"
+        "FtpMlsdItem(type=${itemType}, size=${size}, modify=${modify}, unixUid=${unixUid}, unixGid=${unixGid}, unique=${unique}, perms=${perms}, name=${name})"
     }
 
+}
+
+public class FtpListItem <: ToString {
+    public var perms: String
+    public var nlink: Int64
+    public var user: String
+    public var group: String
+    public var size: Int64
+    public var month: String
+    public var day: String
+    public var time: String
+    public var name: String
+
+    public init() {
+        this.perms = ""
+        this.nlink = 0
+        this.user = ""
+        this.group = ""
+        this.size = 0
+        this.month = ""
+        this.day = ""
+        this.time = ""
+        this.name = ""
+    }
+
+    public func toString(): String {
+        "FtpListItem(perms=${perms}, nlink=${nlink}, user=${user}, group=${group}, size=${size}, month=${month}, day=${day}, time=${time}, name=${name})"
+    }
 }
 
 /**

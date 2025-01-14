@@ -3,7 +3,8 @@ CJ_FTP 仓颉FTP工具文档
 ## 类
 
 #### - [Ftp](classes/Ftp.md) : 本库核心，FTP客户端
-#### - [FtpFileItem](classes/FtpFileItem.md) : 远端文件信息
+#### - [FtpListItem](classes/FtpListItem.md) : 远端文件信息
+#### - [FtpMlsdItem](classes/FtpMlsdItem.md) : 远端文件信息
 
 ## 接口
 

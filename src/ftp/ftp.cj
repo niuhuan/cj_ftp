@@ -387,7 +387,80 @@ public class Ftp <: Resource {
     * @param path directory path
     * @return list of file items
     */
-    public func mlsd(path: Option<String>): ArrayList<FtpFileItem> {
+    public func list(path: Option<String>): ArrayList<FtpListItem> {
+        checkInitMode()
+        let port = pasvPort()
+        var cmd = "LIST"
+        if (path.isSome()) {
+            cmd += " ${path.getOrThrow()}"
+        }
+        writeCommand(cmd)
+        let items = ArrayList<FtpListItem>()
+        try (socket = pasvConnect(port)) {
+            // 150 Accepted data connection
+            readCommand()
+            let reader = StringReader(socket)
+            while(let Some(line) <- reader.readln()) {
+                cjFtpLogger.trace("S: PASV: ${line}", ("name", "Ftp"))
+                items.append(parseListLine(line))
+            }
+        }
+        // 226-Options: -a -l
+        // 226 2 matches total
+        readCommand()
+        items
+    }
+
+    private func parseListLine(line: String): FtpListItem {
+        let item = FtpListItem()
+        let regex = Regex("\\s+")
+        var matcher = regex.matcher(line)
+        var findAll = matcher.findAll();
+        var allMatch = if (let Some(findAll) <- findAll) {
+            findAll
+        } else {
+            throw FtpParseException("Invalid LIST response", line)
+        }
+        if (allMatch.size < 8) {
+            throw FtpParseException("Invalid LIST response", line)
+        }
+        let perms = line[0..allMatch[0].matchPosition(0).start]
+        let nlink = line[allMatch[0].matchPosition(0).end..allMatch[1].matchPosition(0).start]
+        let user = line[allMatch[1].matchPosition(0).end..allMatch[2].matchPosition(0).start]
+        let group = line[allMatch[2].matchPosition(0).end..allMatch[3].matchPosition(0).start]
+        let size = line[allMatch[3].matchPosition(0).end..allMatch[4].matchPosition(0).start]
+        let month = line[allMatch[4].matchPosition(0).end..allMatch[5].matchPosition(0).start]
+        let day = line[allMatch[5].matchPosition(0).end..allMatch[6].matchPosition(0).start]
+        let time = line[allMatch[6].matchPosition(0).end..allMatch[7].matchPosition(0).start]
+        let name =  line[allMatch[7].matchPosition(0).end..]
+        item.perms = perms
+        item.nlink = Int64.parse(nlink)
+        item.user = user
+        item.group = group
+        item.size = Int64.parse(size)
+        item.month = month
+        item.day = day
+        item.time = time
+        item.name = name
+        item
+    }
+
+    /**
+    * `LIST` command for current directory
+    *
+    * @return list of file items
+    */
+    public func list(): ArrayList<FtpListItem> {
+        list(None)
+    }
+
+    /**
+    * `MLSD` command, list directory
+    *
+    * @param path directory path
+    * @return list of file items
+    */
+    public func mlsd(path: Option<String>): ArrayList<FtpMlsdItem> {
         checkInitMode()
         let port = pasvPort()
         var cmd = "MLSD"
@@ -395,7 +468,7 @@ public class Ftp <: Resource {
             cmd += " ${path.getOrThrow()}"
         }
         writeCommand(cmd)
-        let items = ArrayList<FtpFileItem>()
+        let items = ArrayList<FtpMlsdItem>()
         try (socket = pasvConnect(port)) {
             // 150 Accepted data connection
             readCommand()
@@ -414,8 +487,8 @@ public class Ftp <: Resource {
     /**
     * Parse MLSD line
     */
-    private func parseMlsdLine(line: String): FtpFileItem {
-        let item = FtpFileItem()
+    private func parseMlsdLine(line: String): FtpMlsdItem {
+        let item = FtpMlsdItem()
         let parts = line.split(";")
         for (part in parts) {
             let kv = part.split("=")
@@ -456,7 +529,7 @@ public class Ftp <: Resource {
     *
     * @return list of file items
     */
-    public func mlsd(): ArrayList<FtpFileItem> {
+    public func mlsd(): ArrayList<FtpMlsdItem> {
         mlsd(None)
     }
 

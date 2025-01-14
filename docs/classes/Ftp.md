@@ -48,7 +48,7 @@ main(): Int64 {
 | pwd | 执行`PWD`命令，返回当前所在文件夹
 | xpwd | 执行`XPWD`命令，返回当前所在文件夹
 | cwd | 执行`cwd`命令，更换当前所在目录 | 
-| mlsd | 执行`MLSD`命令，列出文件夹中的文件，返回ArrayList<[FtpFileItem](./FtpFileItem.md)>
+| mlsd | 执行`MLSD`命令，列出文件夹中的文件，返回ArrayList<[FtpMlsdItem](./FtpMlsdItem.md)>
 | retr | 执行`RETR`命令，并下载文件 | String 服务器中文件路径，[FtpRetr](../interfaces/FtpRetr.md) 下载监听器 / OutputStream 将文件下载到输出流
 | stor | 执行`STOR`命令，进行文件上传 | String 服务器中的文件路径，[FtpStor](../interfaces/FtpStor.md) 下载监听器 / InputStream 从输入流读取文件
 | appe | 执行`APPE`命令，进行文件追加 | 同`stor`
