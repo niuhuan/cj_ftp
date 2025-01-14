@@ -1,12 +1,14 @@
 package cj_ftp.connection
 
 import std.collection.*
+@When[cjc_version < "0.58.3"]
 import std.socket.*
 import std.io.*
 import std.time.*
 import std.net.*
 import net.tls.*
 import cj_ftp.exception.*
+import cj_ftp.compatible.*
 
 /**
 * Schedule Ftp connections
@@ -80,7 +82,7 @@ public class FtpStreamReader {
             let idx = readBuff[readToBuffPosition..writeToBuffPosition].indexOf("\n".toArray()[0])
             match (idx) {
                 case Some(idx) =>
-                    builder.appendAll(readBuff[readToBuffPosition..(readToBuffPosition + idx + 1)])
+                    add(builder, readBuff[readToBuffPosition..(readToBuffPosition + idx + 1)])
                     readToBuffPosition = readToBuffPosition + idx + 1
                     var i = 0
                     while (readToBuffPosition < writeToBuffPosition) {
@@ -96,7 +98,7 @@ public class FtpStreamReader {
                     let str = String.fromUtf8(builder.toArray()).trimRight("\n").trimRight("\r")
                     return str
                 case None =>
-                    builder.appendAll(readBuff[readToBuffPosition..writeToBuffPosition])
+                    add(builder, readBuff[readToBuffPosition..writeToBuffPosition])
                     readToBuffPosition = 0
                     writeToBuffPosition = inputStream.read(readBuff)
                     if (writeToBuffPosition == 0) {
@@ -178,19 +180,19 @@ public class FtpStreamReader {
             case Some(b) => b
             case None => return None
         }
-        builder.append(readByte)
+        add(builder, readByte)
         //  # 0xxxxxxx  # 110xxxxx  # 1110xxxx # 11110xxx
         if ((readByte & 0b10000000) == 0) {
             //
         } else if ((readByte & 0b11100000) == 0b11000000) {
-            builder.append(this.readByte().getOrThrow({=>FtpConnectionException("eof")}))
+            add(builder, this.readByte().getOrThrow({=>FtpConnectionException("eof")}))
         } else if ((readByte & 0b11110000) == 0b11100000) {
-            builder.append(this.readByte().getOrThrow({=>FtpConnectionException("eof")}))
-            builder.append(this.readByte().getOrThrow({=>FtpConnectionException("eof")}))
+            add(builder, this.readByte().getOrThrow({=>FtpConnectionException("eof")}))
+            add(builder, this.readByte().getOrThrow({=>FtpConnectionException("eof")}))
         } else if ((readByte & 0b11111000) == 0b11110000) {
-            builder.append(this.readByte().getOrThrow({=>FtpConnectionException("eof")}))
-            builder.append(this.readByte().getOrThrow({=>FtpConnectionException("eof")}))
-            builder.append(this.readByte().getOrThrow({=>FtpConnectionException("eof")}))
+            add(builder, this.readByte().getOrThrow({=>FtpConnectionException("eof")}))
+            add(builder, this.readByte().getOrThrow({=>FtpConnectionException("eof")}))
+            add(builder, this.readByte().getOrThrow({=>FtpConnectionException("eof")}))
         } else {
             throw FtpConnectionException("invalid utf8")
         }

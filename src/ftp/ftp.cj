@@ -4,12 +4,14 @@ import cj_ftp.log.*
 import cj_ftp.exception.*
 import cj_ftp.connection.*
 
+@When[cjc_version < "0.58.3"]
 import std.socket.*
 import std.convert.*
 import std.io.*
 import std.net.*
 import std.regex.*
 import std.collection.*
+import cj_ftp.compatible.*
 
 private let responseBaseRegex = Regex("^(\\d\\d\\d)([\\- ])([\\S\\s]+)$")
 private let defaultFtpPort: UInt16 = 21
@@ -135,7 +137,7 @@ public class Ftp <: Resource {
             if (line.startsWith("211")) {
                 continue
             }
-            features.append(line.trimAscii())
+            add(features, line.trimAscii())
         }
         this._features = features
         features
@@ -402,7 +404,7 @@ public class Ftp <: Resource {
             let reader = StringReader(socket)
             while(let Some(line) <- reader.readln()) {
                 cjFtpLogger.trace("S: PASV: ${line}", ("name", "Ftp"))
-                items.append(parseListLine(line))
+                add(items, parseListLine(line))
             }
         }
         // 226-Options: -a -l
@@ -475,7 +477,7 @@ public class Ftp <: Resource {
             let reader = StringReader(socket)
             while(let Some(line) <- reader.readln()) {
                 cjFtpLogger.trace("S: PASV: ${line}", ("name", "Ftp"))
-                items.append(parseMlsdLine(line))
+                add(items, parseMlsdLine(line))
             }
         }
         // 226-Options: -a -l
