@@ -4,8 +4,6 @@ import cj_ftp.log.*
 import cj_ftp.exception.*
 import cj_ftp.connection.*
 
-@When[cjc_version < "0.58.3"]
-import std.socket.*
 import std.convert.*
 import std.io.*
 import std.net.*
@@ -71,11 +69,11 @@ public class Ftp <: Resource {
         while (true) {
             var line = reader.readln().getOrThrow({=>FtpConnectionException("Connect has been eof")})
             cjFtpLogger.trace("S: ${line}", ("name", "Ftp"))
-            match (responseBaseRegex.matches(line)) {
+            match (regexGroups(responseBaseRegex, line)) {
                 case Some(r) =>
-                    let code = Int64.parse(r.matchStr(1))
-                    let minusOrSp = r.matchStr(2)
-                    let message = r.matchStr(3)
+                    let code = Int64.parse(r[1])
+                    let minusOrSp = r[2]
+                    let message = r[3]
                     if (serverResponse.code == 0) {
                         serverResponse.code = code
                     } else if (serverResponse.code != code) {
@@ -284,9 +282,9 @@ public class Ftp <: Resource {
         writeCommand("PWD")
         let rsp = readCommand()
         let regex = Regex("\"([^\"]+)\"")
-        match (regex.matcher(rsp.message).find()) {
+        match (regexGroups(regex, rsp.message)) {
             case Some(r) =>
-                r.matchStr(1)
+                r[1]
             case None =>
                 throw FtpParseException("Invalid PWD response", rsp.message)
         }
@@ -301,9 +299,9 @@ public class Ftp <: Resource {
         writeCommand("XPWD")
         let rsp = readCommand()
         let regex = Regex("\"([^\"]+)\"")
-        match (regex.matcher(rsp.message).find()) {
+        match (regexGroups(regex, rsp.message)) {
             case Some(r) =>
-                r.matchStr(1)
+                r[1]
             case None =>
                 throw FtpParseException("Invalid PWD response", rsp.message)
         }
@@ -326,10 +324,10 @@ public class Ftp <: Resource {
         writeCommand("PASV")
         let rsp = readCommand()
         let regex = Regex("(\\d+),(\\d+),(\\d+),(\\d+),(\\d+),(\\d+)")
-        match (regex.matcher(rsp.message).find()) {
+        match (regexGroups(regex, rsp.message)) {
             case Some(r) =>
-                let ip = "${r.matchStr(1)}.${r.matchStr(2)}.${r.matchStr(3)}.${r.matchStr(4)}"
-                let port = UInt16.parse(r.matchStr(5)) * 256 + UInt16.parse(r.matchStr(6))
+                let ip = "${r[1]}.${r[2]}.${r[3]}.${r[4]}"
+                let port = UInt16.parse(r[5]) * 256 + UInt16.parse(r[6])
                 (ip, port)
             case None =>
                 throw FtpParseException("Invalid PASV response", rsp.message)
@@ -345,9 +343,9 @@ public class Ftp <: Resource {
         writeCommand("EPSV")
         let rsp = readCommand()
         let regex = Regex("\\|\\|\\|(\\d+)\\|")
-        match (regex.matcher(rsp.message).find()) {
+        match (regexGroups(regex, rsp.message)) {
             case Some(r) =>
-                UInt16.parse(r.matchStr(1))
+                UInt16.parse(r[1])
             case None =>
                 throw FtpParseException("Invalid EPSV response", rsp.message)
         }
@@ -416,13 +414,20 @@ public class Ftp <: Resource {
     private func parseListLine(line: String): FtpListItem {
         let item = FtpListItem()
         let regex = Regex("\\s+")
+        @When[cjc_version < "0.59.6"]
         var matcher = regex.matcher(line)
+        @When[cjc_version < "0.59.6"]
         var findAll = matcher.findAll();
+        @When[cjc_version < "0.59.6"]
         var allMatch = if (let Some(findAll) <- findAll) {
             findAll
         } else {
             throw FtpParseException("Invalid LIST response", line)
         }
+        @When[cjc_version >= "0.59.6"]
+        var findAll = regex.findAll(line);
+        @When[cjc_version >= "0.59.6"]
+        var allMatch = findAll;
         if (allMatch.size < 8) {
             throw FtpParseException("Invalid LIST response", line)
         }
@@ -770,5 +775,36 @@ public class Ftp <: Resource {
         // 221-Goodbye. You uploaded 0 and downloaded 2 kbytes.
         // 221 Logout.
         readCommand()
+    }
+}
+
+@When[cjc_version >= "0.59.6"]
+public func regexGroups(regex: Regex, line: String): Option<ArrayList<String>> {
+    let matchs = regex.find(line);
+    match(matchs) {
+        case Some(r) => 
+            let groups = ArrayList<String>()
+            for (i in 0..r.groupCount()) {
+                add(groups, r.matchString(i))
+            }
+            return Some(groups)
+        case None => 
+            return None
+    }
+}
+
+@When[cjc_version < "0.59.6"]
+public func regexGroups(regex: Regex, line: String): Option<ArrayList<String>> {
+    let matchs = regex.matches(line);
+    match(matchs) {
+        case Some(r) => 
+            let groups = ArrayList<String>()
+            for (i in 0..r.groupNumber()) {
+                add(groups, r.matchStr(i))
+            }
+            return Some(groups)
+        case None => 
+            return None
+        
     }
 }

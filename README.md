@@ -82,9 +82,8 @@ main(): Int64 {
 
 | 版本 | 分支 | 
 | -- | -- |
-| 0.53.13 | main |
-| 0.57.3 | main |
 | 0.58.3 | main |
+| 0.59.6 | main |
 
 ### 单元测试
 `cjpm test -V src/tests`

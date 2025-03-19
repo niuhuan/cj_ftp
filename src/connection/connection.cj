@@ -92,10 +92,7 @@ public class FtpStreamReader {
                     }
                     writeToBuffPosition = i
                     readToBuffPosition = 0
-                    @When[cjc_version >= "0.57.3"]
                     let str = String.fromUtf8(builder.toArray()).trimEnd("\n").trimEnd("\r")
-                    @When[cjc_version < "0.57.3"]
-                    let str = String.fromUtf8(builder.toArray()).trimRight("\n").trimRight("\r")
                     return str
                 case None =>
                     add(builder, readBuff[readToBuffPosition..writeToBuffPosition])

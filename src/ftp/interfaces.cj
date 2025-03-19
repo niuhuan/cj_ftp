@@ -5,19 +5,7 @@ import cj_ftp.log.*
 import std.io.*
 import std.fs.*
 
-@When[cjc_version < "0.57.3"]
-public type OpenMode = OpenOption
-
-@When[cjc_version < "0.57.3"]
-public let modeRead = OpenOption.Open(true, false)
-
-@When[cjc_version < "0.57.3"]
-public let modeWrite = OpenOption.CreateOrTruncate(false)
-
-@When[cjc_version >= "0.57.3"]
 public let modeRead = OpenMode.Read
-
-@When[cjc_version >= "0.57.3"]
 public let modeWrite = OpenMode.Write
 
 public interface FtpRetr {
